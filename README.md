@@ -2,6 +2,8 @@
 
 This script scans your local network for new devices and sends notifications via email when new devices are detected. It uses `arp-scan` to detect devices and integrates with Gmail for sending notifications.
 
+It's basically a MAC address whilelist with some addtional features.
+
 ## Here's how it works
 
 1. Your script runs on your local server (connected to your LAN) and it detects a device which is not known (not in knows-hosts.csv file)
