@@ -14,7 +14,7 @@ This script scans your local network for new devices and sends notifications via
 
 <img src="docs/reply-add.png" alt="Reply add" style="width:50%;">
 
-4. Next time your script runs it scans the inbox for your reply and the new device(s)
+4. Next time your script runs it scans the inbox for your reply and adds the new device(s)
 
 ## Features
 
