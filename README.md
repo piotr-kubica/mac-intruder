@@ -1,6 +1,6 @@
 # MAC Intruder Detection
 
-This project scans your local network for new devices and sends notifications via email when new devices are detected. It uses `arp-scan` to detect devices and integrates with Gmail for sending notifications.
+This script scans your local network for new devices and sends notifications via email when new devices are detected. It uses `arp-scan` to detect devices and integrates with Gmail for sending notifications.
 
 ## Here's how it works
 
