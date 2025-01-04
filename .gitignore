@@ -48,3 +48,6 @@ testconf*
 .direnv/
 .envrc
 
+known-hosts.csv
+last_notified.json
+
