@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="mac-intruder",
-    version="0.0.1",
+    version="0.1",
     description="A Python script to detect new devices on a local network and send notifications via email.",
     author="Piotr Kubica",
     author_email="",
