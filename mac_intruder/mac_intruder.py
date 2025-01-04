@@ -52,13 +52,12 @@ class MacIntruder:
 
     def _notify_new_devices(self, scanned_devices, known_devices, last_notified):
         new_devices = self._filter_new_devices(scanned_devices, known_devices, last_notified)
+        self._save_last_notified(last_notified)
         if new_devices:
             logger.info(f"New devices detected: {new_devices}")
             self._send_email(new_devices, KNOWN_HOSTS)
-            self._save_last_notified(last_notified)
         else:
             logger.info("No new devices detected.")
-
         return new_devices
     
     def _check_email_responses_for_devices(self, scanned_devices):
@@ -150,7 +149,7 @@ class MacIntruder:
                 interval = timedelta(seconds=NOTIFY_INTERVAL)
                 now = datetime.now()
 
-                if last_notified.get(mac):
+                if mac in last_notified:
                     last_notify_time_diff = now - last_notified.get(mac)
 
                     if last_notify_time_diff > interval:
@@ -159,7 +158,10 @@ class MacIntruder:
                 else:
                     last_notified[mac] = now
                     new_devices.append(device)
-                    
+            else: 
+                if mac in last_notified:
+                    del last_notified[mac]
+        
         return new_devices
 
     def _send_email(self, new_devices: list[NetworkDevice], known_devices: str):
