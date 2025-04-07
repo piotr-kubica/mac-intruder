@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuration
 KNOWN_HOSTS = os.getenv("KNOWN_HOSTS", "known-hosts.csv")

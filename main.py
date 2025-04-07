@@ -1,14 +1,10 @@
 import logging
 import os
 import csv
-from dotenv import load_dotenv
-
 from mac_intruder.constants import KNOWN_HOSTS
 from mac_intruder.logging import get_logger
 from mac_intruder.mac_intruder import MacIntruder
 
-# Load environment variables from .env file
-load_dotenv()
 
 logger = get_logger(__name__, logging.INFO)
 

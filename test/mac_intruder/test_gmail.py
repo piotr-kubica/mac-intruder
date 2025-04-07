@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from mac_intruder.gmail import GMailReader
+from mac_intruder.mailer import GMailReader
 
 # FILE: mac_intruder/test_gmail.py
 
