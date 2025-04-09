@@ -25,8 +25,13 @@ from mac_intruder.mailer import Mailer
 from mac_intruder.last_notified_dict import LastNotifiedDict
 from mac_intruder.logging import get_logger
 from mac_intruder.network import NetworkDevice, scan_network
+from mac_intruder.constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
+import logging
 
-logger = get_logger(__name__, logging.INFO)
+logger = logging.getLogger(__name__)
+
+RELEVANT_SENDER = EMAIL_RECEPIENT
+RELEVANT_SUBJECT = EMAIL_SUBJECT
 
 
 class MacIntruder:
@@ -48,6 +53,8 @@ class MacIntruder:
         else:
             logger.info("No new devices detected.")
         return new_devices
+
+	# TODO mail reader
         # devices_to_add = self._check_email_responses_for_devices(scanned_devices)
         # known_devices.extend(devices_to_add)
         # self._update_known_devices(scanned_devices, known_devices)
@@ -92,10 +99,9 @@ class MacIntruder:
                 else:
                     last_notified[mac] = now
                     new_devices.append(device)
-            else: 
+            else:
                 if mac in last_notified:
                     del last_notified[mac]
-        
         return new_devices
 
     def _send_email(self, new_devices: list[NetworkDevice], known_devices_path: str):
@@ -113,6 +119,70 @@ class MacIntruder:
         )
         logger.info(f"Sending email to {EMAIL_RECEPIENT} with new devices.")
         self._mailer._send(msg, EMAIL_RECEPIENT)
+
+    def _check_email_responses_for_devices(self, scanned_devices):
+        """
+          Check for email responses with new hosts to add
+        """
+        devices_to_add = []
+        current_dt = datetime.now()
+
+        if (current_dt - self._load_last_email_check_time(current_dt)).total_seconds() >= EMAIL_CHECK_INTERVAL:
+            self._save_last_email_check_time(current_dt)
+
+            parsed_mail_content = [
+                (subject, body) for subject, body in self._parse_maildir_responses()
+            ]
+            new_macs_from_email = [self._find_macs_to_add(body, subject) for subject, body in parsed_mail_content]
+            new_macs_to_add = reduce(lambda acc, lst: acc + lst, new_macs_from_email, [])
+            logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
+
+            for mac in new_macs_to_add:
+                device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
+                devices_to_add.append(device)
+
+                # Additionally update IP and hostname for scanned devices 
+                if mac in scanned_devices.keys():
+                    device.ip = scanned_devices[mac].ip
+                    device.hostname = scanned_devices[mac].hostname
+
+        return devices_to_add
+        
+    def _parse_maildir_responses(self):
+        """
+        Read local maildir and return relevant (subject, body) pairs.
+        """
+        results = []
+        for filename in os.listdir(MAILDIR_PATH):
+            filepath = os.path.join(MAILDIR_PATH, filename)
+            try:
+                with open(filepath, "rb") as f:
+                    msg = message_from_binary_file(f)
+
+                    sender = msg.get("From", "")
+                    subject_raw = msg.get("Subject", "")
+                    subject = decode_header(subject_raw)[0][0]
+                    if isinstance(subject, bytes):
+                        subject = subject.decode("utf-8", errors="replace")
+
+                    if (
+                        RELEVANT_SENDER in sender.lower() and
+                        RELEVANT_SUBJECT.lower() in subject.lower()
+                    ):
+                        # Get plain text body
+                        if msg.is_multipart():
+                            for part in msg.walk():
+                                if part.get_content_type() == "text/plain":
+                                    body = part.get_payload(decode=True).decode(errors="replace")
+                                    results.append((subject, body))
+                                    break
+                        else:
+                            body = msg.get_payload(decode=True).decode(errors="replace")
+                            results.append((subject, body))
+            except Exception as e:
+                logger.warning(f"Failed to parse {filepath}: {e}")
+                
+        return results
 
     def _find_macs_to_add(self, body, subject) -> List[str]:
         if f"Re: {EMAIL_SUBJECT}" not in subject:
@@ -134,34 +204,6 @@ class MacIntruder:
 
         return mac_to_add
 
-    def _check_email_responses_for_devices(self, scanned_devices):
-        """
-          Check for email responses with new hosts to add
-        """
-        devices_to_add = []
-        current_dt = datetime.now()
-
-        if (current_dt - self._load_last_email_check_time(current_dt)).total_seconds() >= EMAIL_CHECK_INTERVAL:
-            self._save_last_email_check_time(current_dt)
-
-            parsed_mail_content = [
-                (subject, body) for subject, body in self._gmail_reader.parse_unread_email_responses()
-            ]
-            new_macs_from_email = [self._find_macs_to_add(body, subject) for subject, body in parsed_mail_content]
-            new_macs_to_add = reduce(lambda acc, lst: acc + lst, new_macs_from_email, [])
-            logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
-
-            for mac in new_macs_to_add:
-                device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
-                devices_to_add.append(device)
-
-                # Additionally update IP and hostname for scanned devices 
-                if mac in scanned_devices.keys():
-                    device.ip = scanned_devices[mac].ip
-                    device.hostname = scanned_devices[mac].hostname
-
-        return devices_to_add
-    
     def _update_known_devices(self, scanned_devices, known_devices):
         """
         Update existing IP for known devices
@@ -177,7 +219,7 @@ class MacIntruder:
 
     def _save_known_devices(self, items):
         return write_known_devices(KNOWN_HOSTS, items)
-    
+
     def _load_last_email_check_time(self, default_value=None):
         if os.path.exists(EMAIL_CHECK_FILE):
             with open(EMAIL_CHECK_FILE, "r") as file:
@@ -185,7 +227,7 @@ class MacIntruder:
                 content = file.read().split()[0]
                 return datetime.fromisoformat(content)
         return default_value
-    
+
     def _save_last_email_check_time(self, check_time):
         """
         Save the last email check time to a file.

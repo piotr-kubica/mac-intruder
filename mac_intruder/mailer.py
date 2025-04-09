@@ -1,9 +1,13 @@
 import subprocess
 import mimetypes
 from email.message import EmailMessage
+from mac_intruder.constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
 import logging
 
 logger = logging.getLogger(__name__)
+
+RELEVANT_SENDER = EMAIL_RECEPIENT
+RELEVANT_SUBJECT = EMAIL_SUBJECT
 
 
 class Mailer:
@@ -63,3 +67,72 @@ class Mailer:
                 logger.info("Email sent successfully!")
         except Exception as e:
             logger.error(f"Failed to send email: {e}")
+
+    def _parse_maildir_responses(self):
+        """
+        Read local maildir and return relevant (subject, body) pairs.
+        """
+        results = []
+
+        for filename in os.listdir(MAILDIR_PATH):
+            filepath = os.path.join(MAILDIR_PATH, filename)
+            try:
+                with open(filepath, "rb") as f:
+                    msg = message_from_binary_file(f)
+
+                    sender = msg.get("From", "")
+                    subject_raw = msg.get("Subject", "")
+                    subject = decode_header(subject_raw)[0][0]
+                    if isinstance(subject, bytes):
+                        subject = subject.decode("utf-8", errors="replace")
+
+                    if (
+                        RELEVANT_SENDER in sender.lower() and
+                        RELEVANT_SUBJECT.lower() in subject.lower()
+                    ):
+                        # Get plain text body
+                        if msg.is_multipart():
+                            for part in msg.walk():
+                                if part.get_content_type() == "text/plain":
+                                    body = part.get_payload(decode=True).decode(errors="replace")
+                                    results.append((subject, body))
+                                    break
+                        else:
+                            body = msg.get_payload(decode=True).decode(errors="replace")
+                            results.append((subject, body))
+
+            except Exception as e:
+                logger.warning(f"Failed to parse {filepath}: {e}")
+
+        return results
+
+    def _update_known_devices(self, scanned_devices, known_devices):
+         """
+         Update existing IP for known devices
+         """
+         for known_device in known_devices:
+             if known_device.mac in scanned_devices.keys() and known_device.ip != scanned_devices[known_device.mac].ip:
+                 logger.info(f"Updating known scanned device {scanned_devices[known_device.mac]} \
+                             has changed ip from {known_device.ip} to {scanned_devices[known_device.mac].ip}")
+                 known_device.ip = scanned_devices[known_device.mac].ip
+
+    def _load_known_devices(self):
+        return load_known_devices(KNOWN_HOSTS)
+
+    def _save_known_devices(self, items):
+        return write_known_devices(KNOWN_HOSTS, items)
+
+    def _load_last_email_check_time(self, default_value=None):
+        if os.path.exists(EMAIL_CHECK_FILE):
+            with open(EMAIL_CHECK_FILE, "r") as file:
+                # Read the first word or token
+                content = file.read().split()[0]
+                return datetime.fromisoformat(content)
+        return default_value
+
+    def _save_last_email_check_time(self, check_time):
+        """
+        Save the last email check time to a file.
+        """
+        with open(EMAIL_CHECK_FILE, "w") as file:
+            file.write(check_time.isoformat())

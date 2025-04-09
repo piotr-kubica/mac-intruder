@@ -15,6 +15,7 @@ NOTIFY_INTERVAL = int(os.getenv("NOTIFY_INTERVAL", 86400))  # 24 hours
 EMAIL_CHECK_INTERVAL = int(os.getenv("EMAIL_CHECK_INTERVAL", 21600))  # 6 hours in seconds
 EMAIL_CHECK_FILE = os.getenv("EMAIL_CHECK_FILE", "last_email_checked.txt")
 EMAIL_RECEPIENT = os.getenv("EMAIL_RECEPIENT", "receiver_email@gmail.com")
+MAILDIR_PATH = os.path.expanduser("~/Mail/Inbox/cur")
 
 # Email template
 EMAIL_SUBJECT = "New Device Detected on LAN"
