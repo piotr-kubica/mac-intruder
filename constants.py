@@ -22,4 +22,4 @@ ENABLE_MAIL_RESPONSE_DEVICE_ADDING = os.getenv("ENABLE_MAIL_RESPONSE_DEVICE_ADDI
 EMAIL_SUBJECT = "New Device Detected on LAN"
 EMAIL_TEMPLATE_PREFIX = "New devices detected on your LAN:"
 EMAIL_TEMPLATE = "{0}, {1}, {2}"
-EMAIL_TEMPLATE_POSTFIX = "List of known devices attached for reference."
+EMAIL_TEMPLATE_POSTFIX = "List of known devices attached for reference.\n Respond with `add <mac_addr>` to add a device to the known devices list.\n\n"
