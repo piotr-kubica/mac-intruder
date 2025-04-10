@@ -135,17 +135,20 @@ class MacIntruder:
             ]
             new_macs_from_email = [self._find_macs_to_add(body, subject) for subject, body in parsed_mail_content]
             new_macs_to_add = reduce(lambda acc, lst: acc + lst, new_macs_from_email, [])
-            logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
 
-            for mac in new_macs_to_add:
-                device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
-                devices_to_add.append(device)
+            if new_macs_to_add:
+                logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
 
-                # Additionally update IP and hostname for scanned devices 
-                if mac in scanned_devices.keys():
-                    device.ip = scanned_devices[mac].ip
-                    device.hostname = scanned_devices[mac].hostname
+                for mac in new_macs_to_add:
+                    device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
+                    devices_to_add.append(device)
 
+                    # Additionally update IP and hostname for scanned devices 
+                    if mac in scanned_devices.keys():
+                        device.ip = scanned_devices[mac].ip
+                        device.hostname = scanned_devices[mac].hostname
+            else:
+                logger.info("No new MAC addresses found in email responses.")
         return devices_to_add
         
     def _parse_maildir_responses(self):
@@ -221,13 +224,18 @@ class MacIntruder:
     def _save_known_devices(self, items):
         return write_known_devices(KNOWN_HOSTS, items)
 
-    def _load_last_email_check_time(self, default_value=None):
+    def _load_last_email_check_time(self, default_value: datetime = None):
         if os.path.exists(EMAIL_CHECK_FILE):
             with open(EMAIL_CHECK_FILE, "r") as file:
                 # Read the first word or token
                 content = file.read().split()[0]
                 return datetime.fromisoformat(content)
-        return default_value
+        else:
+            # Create the file and set the date from default_value
+            if default_value:
+                with open(EMAIL_CHECK_FILE, "w") as file:
+                    file.write(default_value.isoformat())
+            return default_value
 
     def _save_last_email_check_time(self, check_time):
         """
