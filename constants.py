@@ -12,10 +12,10 @@ EMAIL_IMAP = os.getenv("EMAIL_IMAP", "imap.gmail.com")
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME", "your_email@gmail.com")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD", "your_app_password")
 NOTIFY_INTERVAL = int(os.getenv("NOTIFY_INTERVAL", 86400))  # 24 hours
-EMAIL_CHECK_INTERVAL = int(os.getenv("EMAIL_CHECK_INTERVAL", 21600))  # 6 hours in seconds
+EMAIL_CHECK_INTERVAL = int(os.getenv("EMAIL_CHECK_INTERVAL", 21600))  # 6 hours, 21600
 EMAIL_CHECK_FILE = os.getenv("EMAIL_CHECK_FILE", "last_email_checked.txt")
 EMAIL_RECEPIENT = os.getenv("EMAIL_RECEPIENT", "receiver_email@gmail.com")
-MAILDIR_PATH = os.path.expanduser("~/Mail/Inbox/cur")
+MAILDIR_PATH = os.getenv("MAILDIR_PATH", "~/Mail/Inbox/cur")
 ENABLE_MAIL_RESPONSE_DEVICE_ADDING = os.getenv("ENABLE_MAIL_RESPONSE_DEVICE_ADDING", False)
 
 # Email template

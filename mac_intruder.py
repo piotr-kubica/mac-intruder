@@ -17,13 +17,13 @@ from constants import (
     EMAIL_CHECK_INTERVAL,
     EMAIL_CHECK_FILE,
     ENABLE_MAIL_RESPONSE_DEVICE_ADDING,
+    MAILDIR_PATH
 )
 from csv_devices import load_known_devices, write_known_devices
 from mailer import Mailer
 from last_notified_dict import LastNotifiedDict
 from log import get_logger
 from network import NetworkDevice, scan_network
-from constants import MAILDIR_PATH
 from email import message_from_binary_file
 from email.header import decode_header
 
@@ -125,30 +125,29 @@ class MacIntruder:
         """
         logger.info("Checking email responses with new hosts to add...")
         devices_to_add = []
-        current_dt = datetime.now()
+        # current_dt = datetime.now()
+        # if (current_dt - self._load_last_email_check_time(current_dt)).total_seconds() >= EMAIL_CHECK_INTERVAL:
+        #     self._save_last_email_check_time(current_dt)
 
-        if (current_dt - self._load_last_email_check_time(current_dt)).total_seconds() >= EMAIL_CHECK_INTERVAL:
-            self._save_last_email_check_time(current_dt)
+        parsed_mail_content = [
+            (subject, body) for subject, body in self._parse_maildir_responses()
+        ]
+        new_macs_from_email = [self._find_macs_to_add(body, subject) for subject, body in parsed_mail_content]
+        new_macs_to_add = set(reduce(lambda acc, lst: acc + lst, new_macs_from_email, []))
 
-            parsed_mail_content = [
-                (subject, body) for subject, body in self._parse_maildir_responses()
-            ]
-            new_macs_from_email = [self._find_macs_to_add(body, subject) for subject, body in parsed_mail_content]
-            new_macs_to_add = reduce(lambda acc, lst: acc + lst, new_macs_from_email, [])
+        if new_macs_to_add:
+            logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
 
-            if new_macs_to_add:
-                logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
+        for mac in new_macs_to_add:
+            device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
+            devices_to_add.append(device)
 
-            for mac in new_macs_to_add:
-                device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
-                devices_to_add.append(device)
-
-                # Additionally update IP and hostname for scanned devices 
-                if mac in scanned_devices.keys():
-                    device.ip = scanned_devices[mac].ip
-                    device.hostname = scanned_devices[mac].hostname
-        else:
-            logger.info("No new MAC addresses found in email responses.")
+            # Additionally update IP and hostname for scanned devices 
+            if mac in scanned_devices.keys():
+                device.ip = scanned_devices[mac].ip
+                device.hostname = str(scanned_devices[mac].hostname).replace(",", "")
+        # else:
+        #     logger.info("No new MAC addresses found in email responses.")
         return devices_to_add
         
     def _parse_maildir_responses(self):
@@ -157,13 +156,21 @@ class MacIntruder:
         """
         logger.info("Reading local maildir...")
         results = []
-        for filename in os.listdir(MAILDIR_PATH):
-            filepath = os.path.join(MAILDIR_PATH, filename)
+        current_time = datetime.now()
+
+        # Expand the MAILDIR_PATH to handle '~'
+        maildir_path = os.path.expanduser(MAILDIR_PATH)
+
+        for filename in os.listdir(maildir_path):
+            filepath = os.path.join(maildir_path, filename)
+            file_mod_time = datetime.fromtimestamp(os.path.getmtime(filepath))
+
+            if (current_time - file_mod_time).total_seconds() > EMAIL_CHECK_INTERVAL * 2:
+                continue  # Skip files older than EMAIL_CHECK_INTERVAL * 2
+
             try:
                 with open(filepath, "rb") as f:
                     msg = message_from_binary_file(f)
-
-                    # TODO only look for mails not older than EMAIL_CHECK_INTERVAL * 2
                     sender = msg.get("From", "")
                     subject_raw = msg.get("Subject", "")
                     subject = decode_header(subject_raw)[0][0]
