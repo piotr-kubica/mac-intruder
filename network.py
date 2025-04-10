@@ -1,8 +1,7 @@
 import subprocess
 from dataclasses import dataclass
 
-from logging import get_logger
-
+from log import get_logger
 
 @dataclass
 class NetworkDevice:

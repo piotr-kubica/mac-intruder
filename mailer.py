@@ -1,10 +1,15 @@
 import subprocess
 import mimetypes
 from email.message import EmailMessage
+from email.header import decode_header
 from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
-import logging
+from log import get_logger
+import os
+from datetime import datetime
+from csv_devices import load_known_devices, write_known_devices
+from email import message_from_binary_file
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 RELEVANT_SENDER = EMAIL_RECEPIENT
 RELEVANT_SUBJECT = EMAIL_SUBJECT

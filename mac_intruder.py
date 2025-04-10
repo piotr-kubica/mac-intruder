@@ -21,15 +21,14 @@ from constants import (
     EMAIL_CHECK_FILE,
     ENABLE_MAIL_RESPONSE_DEVICE_ADDING,
 )
-from csv import load_known_devices, write_known_devices
+from csv_devices import load_known_devices, write_known_devices
 from mailer import Mailer
 from last_notified_dict import LastNotifiedDict
-from logging import get_logger
+from log import get_logger
 from network import NetworkDevice, scan_network
 from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
-import logging
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 RELEVANT_SENDER = EMAIL_RECEPIENT
 RELEVANT_SUBJECT = EMAIL_SUBJECT

@@ -2,7 +2,7 @@ import logging
 import os
 import csv
 from constants import KNOWN_HOSTS
-from logging import get_logger
+from log import get_logger
 from mac_intruder import MacIntruder
 
 
