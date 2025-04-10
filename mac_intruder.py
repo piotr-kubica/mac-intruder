@@ -163,6 +163,7 @@ class MacIntruder:
                 with open(filepath, "rb") as f:
                     msg = message_from_binary_file(f)
 
+                    # TODO only look for mails not older than EMAIL_CHECK_INTERVAL * 2
                     sender = msg.get("From", "")
                     subject_raw = msg.get("Subject", "")
                     subject = decode_header(subject_raw)[0][0]
