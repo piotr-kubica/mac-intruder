@@ -5,7 +5,7 @@ import re
 from datetime import datetime, timedelta
 from typing import List, Dict
 from functools import reduce
-from mac_intruder.constants import (
+from constants import (
     EMAIL_PASSWORD,
     EMAIL_RECEPIENT,
     EMAIL_SUBJECT,
@@ -18,14 +18,15 @@ from mac_intruder.constants import (
     NOTIFY_INTERVAL,
     EMAIL_IMAP,
     EMAIL_CHECK_INTERVAL,
-    EMAIL_CHECK_FILE
+    EMAIL_CHECK_FILE,
+    ENABLE_MAIL_RESPONSE_DEVICE_ADDING,
 )
-from mac_intruder.csv import load_known_devices, write_known_devices
-from mac_intruder.mailer import Mailer
-from mac_intruder.last_notified_dict import LastNotifiedDict
-from mac_intruder.logging import get_logger
-from mac_intruder.network import NetworkDevice, scan_network
-from mac_intruder.constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
+from csv import load_known_devices, write_known_devices
+from mailer import Mailer
+from last_notified_dict import LastNotifiedDict
+from logging import get_logger
+from network import NetworkDevice, scan_network
+from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
 import logging
 
 logger = logging.getLogger(__name__)
@@ -52,13 +53,13 @@ class MacIntruder:
             self._send_email(new_devices, KNOWN_HOSTS)
         else:
             logger.info("No new devices detected.")
-        return new_devices
 
-	# TODO mail reader
-        # devices_to_add = self._check_email_responses_for_devices(scanned_devices)
-        # known_devices.extend(devices_to_add)
-        # self._update_known_devices(scanned_devices, known_devices)
-        # self._save_known_devices(known_devices)
+        if bool(ENABLE_MAIL_RESPONSE_DEVICE_ADDING):
+            devices_to_add = self._check_email_responses_for_devices(scanned_devices)
+            known_devices.extend(devices_to_add)
+            self._update_known_devices(scanned_devices, known_devices)
+            self._save_known_devices(known_devices)
+        return new_devices
 
     def _load_last_notified(self) -> LastNotifiedDict:
         """Load the last notified state from a JSON file."""
@@ -124,6 +125,7 @@ class MacIntruder:
         """
           Check for email responses with new hosts to add
         """
+        logger.info("Checking email responses with new hosts to add...")
         devices_to_add = []
         current_dt = datetime.now()
 
@@ -152,6 +154,7 @@ class MacIntruder:
         """
         Read local maildir and return relevant (subject, body) pairs.
         """
+        logger.info("Reading local maildir...")
         results = []
         for filename in os.listdir(MAILDIR_PATH):
             filepath = os.path.join(MAILDIR_PATH, filename)

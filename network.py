@@ -1,7 +1,7 @@
 import subprocess
 from dataclasses import dataclass
 
-from mac_intruder.logging import get_logger
+from logging import get_logger
 
 
 @dataclass

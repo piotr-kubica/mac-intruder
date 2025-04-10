@@ -1,7 +1,7 @@
 import subprocess
 import mimetypes
 from email.message import EmailMessage
-from mac_intruder.constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
+from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
 import logging
 
 logger = logging.getLogger(__name__)

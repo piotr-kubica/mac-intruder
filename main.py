@@ -1,9 +1,9 @@
 import logging
 import os
 import csv
-from mac_intruder.constants import KNOWN_HOSTS
-from mac_intruder.logging import get_logger
-from mac_intruder.mac_intruder import MacIntruder
+from constants import KNOWN_HOSTS
+from logging import get_logger
+from mac_intruder import MacIntruder
 
 
 logger = get_logger(__name__, logging.INFO)

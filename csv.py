@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from mac_intruder.network import NetworkDevice
+from network import NetworkDevice
 
 
 def load_known_devices(known_devices_csv: str) -> list[str]:
