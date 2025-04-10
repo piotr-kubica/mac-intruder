@@ -1,12 +1,10 @@
 import json
-import logging
 import os
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict
 from functools import reduce
 from constants import (
-    EMAIL_PASSWORD,
     EMAIL_RECEPIENT,
     EMAIL_SUBJECT,
     EMAIL_TEMPLATE,
@@ -16,7 +14,6 @@ from constants import (
     KNOWN_HOSTS,
     LAST_NOTIFIED_FILE,
     NOTIFY_INTERVAL,
-    EMAIL_IMAP,
     EMAIL_CHECK_INTERVAL,
     EMAIL_CHECK_FILE,
     ENABLE_MAIL_RESPONSE_DEVICE_ADDING,
@@ -26,7 +23,9 @@ from mailer import Mailer
 from last_notified_dict import LastNotifiedDict
 from log import get_logger
 from network import NetworkDevice, scan_network
-from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
+from constants import MAILDIR_PATH
+from email import message_from_binary_file
+from email.header import decode_header
 
 logger = get_logger(__name__)
 
@@ -105,7 +104,7 @@ class MacIntruder:
         return new_devices
 
     def _send_email(self, new_devices: list[NetworkDevice], known_devices_path: str):
-        logger.info(f"Creating email with new devices.")
+        logger.info("Creating email with new devices.")
         formatted_devices = "\n".join([
             EMAIL_TEMPLATE.format(device.mac, device.ip, device.hostname) 
             for device in new_devices])
@@ -188,7 +187,7 @@ class MacIntruder:
 
     def _find_macs_to_add(self, body, subject) -> List[str]:
         if f"Re: {EMAIL_SUBJECT}" not in subject:
-            logger.info(f"No emails found matching response to detection email.")
+            logger.info("No emails found matching response to detection email.")
             return []
 
         mac_to_add = []

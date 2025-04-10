@@ -30,6 +30,6 @@ def scan_network() -> list[NetworkDevice]:
                         parts[2].strip() if len(parts) > 2 else "Unknown"
                     )
                 )
-    except Exception as e:
+    except Exception:
         get_logger(__name__).info("Error scanning network: {e}")
     return devices

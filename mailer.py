@@ -2,7 +2,7 @@ import subprocess
 import mimetypes
 from email.message import EmailMessage
 from email.header import decode_header
-from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT
+from constants import MAILDIR_PATH,EMAIL_RECEPIENT,EMAIL_SUBJECT,EMAIL_CHECK_FILE,KNOWN_HOSTS
 from log import get_logger
 import os
 from datetime import datetime
