@@ -139,16 +139,16 @@ class MacIntruder:
             if new_macs_to_add:
                 logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
 
-                for mac in new_macs_to_add:
-                    device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
-                    devices_to_add.append(device)
+            for mac in new_macs_to_add:
+                device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
+                devices_to_add.append(device)
 
-                    # Additionally update IP and hostname for scanned devices 
-                    if mac in scanned_devices.keys():
-                        device.ip = scanned_devices[mac].ip
-                        device.hostname = scanned_devices[mac].hostname
-            else:
-                logger.info("No new MAC addresses found in email responses.")
+                # Additionally update IP and hostname for scanned devices 
+                if mac in scanned_devices.keys():
+                    device.ip = scanned_devices[mac].ip
+                    device.hostname = scanned_devices[mac].hostname
+        else:
+            logger.info("No new MAC addresses found in email responses.")
         return devices_to_add
         
     def _parse_maildir_responses(self):
