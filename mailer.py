@@ -127,17 +127,3 @@ class Mailer:
     def _save_known_devices(self, items):
         return write_known_devices(KNOWN_HOSTS, items)
 
-    def _load_last_email_check_time(self, default_value=None):
-        if os.path.exists(EMAIL_CHECK_FILE):
-            with open(EMAIL_CHECK_FILE, "r") as file:
-                # Read the first word or token
-                content = file.read().split()[0]
-                return datetime.fromisoformat(content)
-        return default_value
-
-    def _save_last_email_check_time(self, check_time):
-        """
-        Save the last email check time to a file.
-        """
-        with open(EMAIL_CHECK_FILE, "w") as file:
-            file.write(check_time.isoformat())

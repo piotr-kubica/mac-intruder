@@ -53,8 +53,12 @@ class MacIntruder:
             logger.info("No new devices detected.")
 
         if bool(ENABLE_MAIL_RESPONSE_DEVICE_ADDING):
+            # TODO run mbsync gmail
             devices_to_add = self._check_email_responses_for_devices(scanned_devices)
-            known_devices.extend(devices_to_add)
+            for device in devices_to_add:
+                if device.mac not in [known_device.mac for known_device in known_devices]:
+                    logger.info(f"Adding new devices for MACs: {device.mac}")
+                    known_devices.append(device)
             self._update_known_devices(scanned_devices, known_devices)
             self._save_known_devices(known_devices)
         return new_devices
@@ -125,18 +129,11 @@ class MacIntruder:
         """
         logger.info("Checking email responses with new hosts to add...")
         devices_to_add = []
-        # current_dt = datetime.now()
-        # if (current_dt - self._load_last_email_check_time(current_dt)).total_seconds() >= EMAIL_CHECK_INTERVAL:
-        #     self._save_last_email_check_time(current_dt)
-
         parsed_mail_content = [
             (subject, body) for subject, body in self._parse_maildir_responses()
         ]
         new_macs_from_email = [self._find_macs_to_add(body, subject) for subject, body in parsed_mail_content]
         new_macs_to_add = set(reduce(lambda acc, lst: acc + lst, new_macs_from_email, []))
-
-        if new_macs_to_add:
-            logger.info(f"Adding new devices for MACs: {new_macs_to_add}")
 
         for mac in new_macs_to_add:
             device = NetworkDevice(mac=mac, ip="Unknown", hostname="Unknown")
@@ -146,8 +143,7 @@ class MacIntruder:
             if mac in scanned_devices.keys():
                 device.ip = scanned_devices[mac].ip
                 device.hostname = str(scanned_devices[mac].hostname).replace(",", "")
-        # else:
-        #     logger.info("No new MAC addresses found in email responses.")
+
         return devices_to_add
         
     def _parse_maildir_responses(self):
@@ -232,22 +228,3 @@ class MacIntruder:
     def _save_known_devices(self, items):
         return write_known_devices(KNOWN_HOSTS, items)
 
-    def _load_last_email_check_time(self, default_value: datetime = None):
-        if os.path.exists(EMAIL_CHECK_FILE):
-            with open(EMAIL_CHECK_FILE, "r") as file:
-                # Read the first word or token
-                content = file.read().split()[0]
-                return datetime.fromisoformat(content)
-        else:
-            # Create the file and set the date from default_value
-            if default_value:
-                with open(EMAIL_CHECK_FILE, "w") as file:
-                    file.write(default_value.isoformat())
-            return default_value
-
-    def _save_last_email_check_time(self, check_time):
-        """
-        Save the last email check time to a file.
-        """
-        with open(EMAIL_CHECK_FILE, "w") as file:
-            file.write(check_time.isoformat())
